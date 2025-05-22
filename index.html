@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GLTF Model Viewer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.134.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.134.0/examples/js/controls/OrbitControls.js"></script>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: white; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+    <script>
+        // Create scene, camera, and renderer
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xffffff); // White background
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Add lights for better visibility
+        const ambientLight = new THREE.AmbientLight(0xffffff, 2);
+        scene.add(ambientLight);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 3);
+        directionalLight.position.set(5, 5, 5);
+        scene.add(directionalLight);
+
+        // Add controls for zoom and rotation
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.enableZoom = true;
+
+        // Load GLTF model (with external .bin)
+        const loader = new THREE.GLTFLoader();
+        loader.load('model.gltf', function (gltf) {
+            console.log("GLTF file loaded successfully!");
+
+            const model = gltf.scene;
+            scene.add(model);
+            camera.position.set(0, 1, 5);
+
+            // Ensure materials load properly
+            model.traverse((child) => {
+                if (child.isMesh && child.material) {
+                    child.material.needsUpdate = true;
+                }
+            });
+
+            function animate() {
+                requestAnimationFrame(animate);
+                model.rotation.y += 0.0025; // Slow rotation
+                controls.update();
+                renderer.render(scene, camera);
+            }
+            animate();
+        }, undefined, function (error) {
+            console.error("Error loading model:", error);
+        });
+
+        // Handle resizing
+        window.addEventListener('resize', () => {
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+        });
+    </script>
+</body>
+</html>
